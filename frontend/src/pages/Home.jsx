@@ -4,10 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import FileUpload from "../components/FileUpload";
 import FileList from "../components/FileList";
 import api from "../utils/api";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const { user, logout } = useAuth();
   const [files, setFiles] = useState([]);
+  const navigate = useNavigate();
 
   const fetchFiles = async () => {
     try {
@@ -32,7 +34,10 @@ const Home = () => {
       toast.error("Failed to delete file");
     }
   };
-
+  const redirectLogic = () => {
+    navigate("/admin");
+  };
+  console.log(user);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
@@ -45,11 +50,27 @@ const Home = () => {
                 alt="Mini Drive logo"
                 className="h-6 w-6"
               />
-              Mini Drive
+              <span className="flex items-start">
+                Mini Drive
+                {user.role === "admin" && (
+                  <sup className="ml-1 text-[10px] font-semibold text-blue-600 border border-blue-600 rounded-full px-1 leading-none">
+                    admin
+                  </sup>
+                )}
+              </span>
             </h1>
 
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Hi, {user?.name}</span>
+              {user.role === "admin" && (
+                <button
+                  onClick={redirectLogic}
+                  className="text-gray-700 cursor-pointer"
+                >
+                  Dashboard
+                </button>
+              )}
+
               <button
                 onClick={logout}
                 className="px-3 py-1 text-sm text-red-600 border border-red-600 rounded hover:bg-red-50"
