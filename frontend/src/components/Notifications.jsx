@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BellIcon, CheckBadgeIcon } from "@heroicons/react/24/solid"; // Added CheckBadgeIcon
+import { BellIcon, CheckBadgeIcon } from "@heroicons/react/24/solid";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -19,7 +19,6 @@ const Notifications = () => {
     try {
       const { data } = await api.get("/api/notifications");
       setNotifications(data);
-      // Removed console.log to keep it clean
     } catch (error) {
       console.error("Failed to fetch notifications");
     }
@@ -27,11 +26,11 @@ const Notifications = () => {
 
   const handleRead = async (notif) => {
     try {
-      // 1. Mark as read in Backend
+      // Mark as read in backend
       if (!notif.read) {
         await api.put(`/api/notifications/${notif._id}/read`);
 
-        // 2. Update Local State (Optimistic UI)
+        // Update local state (optimistic UI)
         setNotifications((prev) =>
           prev.map((n) => (n._id === notif._id ? { ...n, read: true } : n))
         );
@@ -39,7 +38,7 @@ const Notifications = () => {
 
       setShowDropdown(false);
 
-      // 3. Navigate (Only if it's a file request)
+      // Navigate if it's a file request
       if (notif.file) {
         navigate(`/file/${notif.file._id}`);
       }
@@ -48,7 +47,6 @@ const Notifications = () => {
     }
   };
 
-  // NEW: Mark All as Read Function
   const handleMarkAllRead = async () => {
     // Only proceed if there are unread items
     if (notifications.every((n) => n.read)) return;
@@ -64,7 +62,6 @@ const Notifications = () => {
     }
   };
 
-  // UPDATED: Use 'read' instead of 'isRead' to match DB model
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
