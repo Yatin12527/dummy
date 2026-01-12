@@ -13,9 +13,8 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "mini-drive", // Folder name in Cloudinary
-    allowed_formats: ["jpg", "png", "jpeg", "pdf"], // Restrict file types
-    resource_type: "auto", // Auto-detect image or raw (pdf)
+    folder: "mini-drive",
+    resource_type: "auto",
   },
 });
 
