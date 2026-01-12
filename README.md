@@ -53,17 +53,17 @@ Or run separately:
 
 2. Start the backend server:
 ```bash
-npm run server
+npm run dev
 ```
 
 3. Start the frontend (in a new terminal):
 ```bash
-npm run client
+npm run dev
 ```
 
 ### Access Points
 
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:5173
 - Backend API: http://localhost:5000
 - API Test Route: http://localhost:5000/api/test
 
@@ -83,4 +83,8 @@ Backend environment variables are configured in `backend/.env`:
 - **Mongoose**: MongoDB object modeling
 - **Axios**: HTTP client
 - **Concurrently**: Run multiple commands
+
+## Admin Credentials
+- **Email**: testuser@gmail.com
+- **Password**: 12345
 
