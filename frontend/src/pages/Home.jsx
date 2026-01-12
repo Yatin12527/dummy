@@ -5,6 +5,7 @@ import FileUpload from "../components/FileUpload";
 import FileList from "../components/FileList";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
+import Notifications from "../components/Notifications";
 
 const Home = () => {
   const { user, logout } = useAuth();
@@ -61,6 +62,7 @@ const Home = () => {
             </h1>
 
             <div className="flex items-center space-x-4">
+              <Notifications />
               <span className="text-gray-700">Hi, {user?.name}</span>
               {user.role === "admin" && (
                 <button

@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoute.js";
 import fileRoutes from "./routes/fileRoute.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -24,6 +25,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use(cors({
     origin: [          
       process.env.FRONTEND_URL         

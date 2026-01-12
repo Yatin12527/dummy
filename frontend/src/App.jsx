@@ -36,10 +36,7 @@ function App() {
             user?.role === "admin" ? <AdminDashboard /> : <Navigate to="/" />
           }
         />
-        <Route
-          path="/file/:id"
-          element={user ? <FileView /> : <Navigate to="/login" />}
-        />
+        <Route path="/file/:id" element={<FileView />} />
       </Routes>
     </>
   );

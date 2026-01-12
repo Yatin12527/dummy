@@ -10,7 +10,7 @@ import {
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/solid";
 import AccessModal from "./AccessModal";
-import ShareModal from "./ShareModal"; 
+import ShareModal from "./ShareModal";
 
 const FileList = ({ files, onDelete }) => {
   const [accessModalFileId, setAccessModalFileId] = useState(null);
@@ -104,6 +104,7 @@ const FileList = ({ files, onDelete }) => {
               </p>
 
               <div className="grid grid-cols-2 gap-2 mt-4">
+                {/* View */}
                 <a
                   href={`/file/${file._id}`}
                   target="_blank"
@@ -112,23 +113,19 @@ const FileList = ({ files, onDelete }) => {
                 >
                   <EyeIcon className="h-3 w-3" /> View
                 </a>
-                <button
-                  onClick={() => setShareModalFile(file)}
-                  className="text-green-600 hover:text-green-800 flex items-center gap-1 text-xs"
-                >
-                  <ShareIcon className="h-3 w-3" /> Share
-                </button>
 
+                {/* Share (Opens the Unified Access Modal) */}
                 <button
                   onClick={() => setAccessModalFileId(file._id)}
-                  className="text-purple-600 hover:text-purple-800 flex items-center gap-1 text-xs"
+                  className="text-green-600 hover:text-green-800 flex items-center gap-1 text-xs"
                 >
-                  <UserGroupIcon className="h-3 w-3" /> Access
+                  <UserGroupIcon className="h-3 w-3" /> Share
                 </button>
 
+                {/* Delete */}
                 <button
                   onClick={() => onDelete(file._id)}
-                  className="text-red-600 hover:text-red-800 flex items-center gap-1 text-xs"
+                  className="text-red-600 hover:text-red-800 flex items-center gap-1 text-xs col-span-2 justify-center border-t pt-2 mt-2"
                 >
                   <TrashIcon className="h-3 w-3" /> Delete
                 </button>
