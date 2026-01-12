@@ -46,13 +46,13 @@ const FileUpload = ({ onUploadSuccess }) => {
             file:rounded-full file:border-0
             file:text-sm file:font-semibold
             file:bg-blue-50 file:text-blue-700
-            hover:file:bg-blue-100"
+            hover:file:bg-blue-100 cursor-pointer "
         />
         <button
           type="submit"
           disabled={uploading}
-          className={`px-4 py-2 text-white font-bold rounded ${
-            uploading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+          className={`px-4 py-2 text-white font-bold rounded  ${
+            uploading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700 "
           }`}
         >
           {uploading ? "Uploading..." : "Upload"}
