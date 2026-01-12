@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { BellIcon } from "@heroicons/react/24/solid";
+import { BellIcon, CheckBadgeIcon } from "@heroicons/react/24/solid"; // Added CheckBadgeIcon
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -18,7 +19,7 @@ const Notifications = () => {
     try {
       const { data } = await api.get("/api/notifications");
       setNotifications(data);
-      console.log("notif data:",data)
+      // Removed console.log to keep it clean
     } catch (error) {
       console.error("Failed to fetch notifications");
     }
@@ -26,41 +27,78 @@ const Notifications = () => {
 
   const handleRead = async (notif) => {
     try {
-      await api.put(`/api/notifications/${notif._id}/read`);
-      setNotifications(
-        notifications.map((n) =>
-          n._id === notif._id ? { ...n, isRead: true } : n
-        )
-      );
+      // 1. Mark as read in Backend
+      if (!notif.read) {
+        await api.put(`/api/notifications/${notif._id}/read`);
 
-      navigate(`/file/${notif.file._id}`);
+        // 2. Update Local State (Optimistic UI)
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === notif._id ? { ...n, read: true } : n))
+        );
+      }
+
       setShowDropdown(false);
+
+      // 3. Navigate (Only if it's a file request)
+      if (notif.file) {
+        navigate(`/file/${notif.file._id}`);
+      }
     } catch (error) {
       console.error("Error reading notification");
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  // NEW: Mark All as Read Function
+  const handleMarkAllRead = async () => {
+    // Only proceed if there are unread items
+    if (notifications.every((n) => n.read)) return;
+
+    try {
+      await api.put("/api/notifications/mark-read-all");
+
+      // Update local state instantly
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success("All marked as read");
+    } catch (error) {
+      toast.error("Failed to mark all as read");
+    }
+  };
+
+  // UPDATED: Use 'read' instead of 'isRead' to match DB model
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 text-gray-600 hover:text-blue-600"
+        className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors"
       >
         <BellIcon className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full border-2 border-white">
             {unreadCount}
           </span>
         )}
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden border border-gray-100">
-          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 font-semibold text-gray-700">
-            Notifications
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden border border-gray-100 animate-fade-in-down">
+          {/* Header with Mark All Read Button */}
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+            <span className="font-semibold text-gray-700">Notifications</span>
+
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                title="Mark all as read"
+              >
+                <CheckBadgeIcon className="h-4 w-4" />
+                Mark all read
+              </button>
+            )}
           </div>
+
           <div className="max-h-64 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="p-4 text-sm text-gray-500 text-center">
@@ -71,14 +109,29 @@ const Notifications = () => {
                 <div
                   key={notif._id}
                   onClick={() => handleRead(notif)}
-                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                    notif.isRead ? "opacity-50" : "bg-blue-50"
+                  className={`p-4 border-b transition-colors cursor-pointer hover:bg-gray-50 flex gap-3 ${
+                    notif.read ? "bg-white opacity-70" : "bg-blue-50"
                   }`}
                 >
-                  <p className="text-sm text-gray-800">{notif.message}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(notif.createdAt).toLocaleDateString()}
-                  </p>
+                  {/* Blue dot for unread */}
+                  {!notif.read && (
+                    <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+                  )}
+
+                  <div>
+                    <p
+                      className={`text-sm ${
+                        notif.read
+                          ? "text-gray-600"
+                          : "text-gray-900 font-medium"
+                      }`}
+                    >
+                      {notif.message}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(notif.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               ))
             )}

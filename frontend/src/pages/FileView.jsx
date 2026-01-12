@@ -8,12 +8,12 @@ import {
   XMarkIcon,
   LockClosedIcon,
   PaperAirplaneIcon,
-  UserGroupIcon, // Import this
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
-import AccessModal from "../components/AccessModal"; // Import the Modal
+import AccessModal from "../components/AccessModal";
 
 const FileView = () => {
   const { id } = useParams();
@@ -24,13 +24,11 @@ const FileView = () => {
   const [role, setRole] = useState("none");
   const [loading, setLoading] = useState(true);
 
-  // States
   const [accessDenied, setAccessDenied] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showAccessModal, setShowAccessModal] = useState(false); // Modal State
+  const [showAccessModal, setShowAccessModal] = useState(false);
 
-  // ... (Keep newName, newFile, isSaving states same as before)
   const [newName, setNewName] = useState("");
   const [newFile, setNewFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -58,7 +56,6 @@ const FileView = () => {
     }
   };
 
-  // ... (Keep handleRequestAccess, handleDownload, handleDelete, handleSaveEdit same as before) ...
   const handleRequestAccess = async () => {
     try {
       await api.post(`/api/files/${id}/request`);
@@ -123,29 +120,28 @@ const FileView = () => {
 
   if (loading) return <div className="text-center mt-20">Loading...</div>;
 
-  // Access Denied Screen (Same as before)
   if (accessDenied) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-md w-full text-center">
+          <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5">
             <LockClosedIcon className="h-8 w-8 text-red-500" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Access Restricted
           </h2>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-600 mb-6">
             You need permission to view this file.
           </p>
           {user ? (
             requestSent ? (
-              <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg font-medium">
+              <div className="bg-green-50 text-green-700 px-5 py-3 rounded-lg font-medium border border-green-200">
                 Request Sent!
               </div>
             ) : (
               <button
                 onClick={handleRequestAccess}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
                 <PaperAirplaneIcon className="h-5 w-5" /> Request Access
               </button>
@@ -155,7 +151,7 @@ const FileView = () => {
               onClick={() =>
                 navigate("/login", { state: { from: `/file/${id}` } })
               }
-              className="w-full bg-gray-900 text-white py-3 rounded-lg font-bold"
+              className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
             >
               Log In to Request
             </button>
@@ -168,123 +164,132 @@ const FileView = () => {
   const canEdit = role === "owner" || role === "edit";
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8">
-      <button
-        onClick={() => navigate("/")}
-        className="mb-4 text-gray-500 hover:text-gray-900 text-sm"
-      >
-        &larr; Back to Dashboard
-      </button>
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={() => navigate("/")}
+          className="mb-5 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+        >
+          &larr; Back to Dashboard
+        </button>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        {/* PREVIEW */}
-        <div className="bg-gray-900 h-96 flex items-center justify-center relative group">
-          {file.type.startsWith("image/") ? (
-            <img
-              src={file.url}
-              alt={file.name}
-              className="h-full object-contain"
-            />
-          ) : file.type.startsWith("video/") ? (
-            <video src={file.url} controls className="h-full w-full" />
-          ) : (
-            <div className="text-white text-center">
-              <div className="text-6xl mb-2">📄</div>
-              <p>Preview not available</p>
-            </div>
-          )}
-          <button
-            onClick={handleDownload}
-            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-sm"
-          >
-            <ArrowDownTrayIcon className="h-6 w-6" />
-          </button>
-        </div>
-
-        {/* DETAILS & ACTIONS */}
-        <div className="p-6">
-          {!isEditing ? (
-            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {file.name}
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Size: {(file.size / 1024).toFixed(2)} KB •{" "}
-                  {role === "owner" ? "You" : "User"}
-                </p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* PREVIEW */}
+          <div className="bg-gray-900 h-[450px] flex items-center justify-center relative group">
+            {file.type.startsWith("image/") ? (
+              <img
+                src={file.url}
+                alt={file.name}
+                className="h-full object-contain"
+              />
+            ) : file.type.startsWith("video/") ? (
+              <video src={file.url} controls className="h-full w-full" />
+            ) : (
+              <div className="text-white text-center">
+                <div className="text-7xl mb-3">📄</div>
+                <p className="text-lg">Preview not available</p>
               </div>
+            )}
+            <button
+              onClick={handleDownload}
+              className="absolute top-5 right-5 bg-white/10 hover:bg-white/20 text-white p-3 rounded-lg backdrop-blur-sm transition-all"
+            >
+              <ArrowDownTrayIcon className="h-6 w-6" />
+            </button>
+          </div>
 
-              <div className="flex gap-2">
-                {/* NEW: Share Button (Only for Owner) */}
-                {role === "owner" && (
+          {/* DETAILS & ACTIONS */}
+          <div className="p-7">
+            {!isEditing ? (
+              <div className="flex flex-col md:flex-row justify-between items-start gap-5">
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    {file.name}
+                  </h1>
+                  <p className="text-base text-gray-600">
+                    {(file.size / 1024).toFixed(2)} KB •{" "}
+                    {role === "owner" ? "You" : "User"}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {role === "owner" && (
+                    <button
+                      onClick={() => setShowAccessModal(true)}
+                      className="flex items-center gap-2 bg-green-50 text-green-700 px-5 py-2.5 rounded-lg hover:bg-green-100 font-medium transition-all border border-green-200"
+                    >
+                      <UserGroupIcon className="h-5 w-5" />
+                      Manage Access
+                    </button>
+                  )}
+
+                  {canEdit && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2 bg-blue-50 text-blue-700 px-5 py-2.5 rounded-lg hover:bg-blue-100 font-medium transition-all border border-blue-200"
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                      Edit
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-blue-50 -m-7 p-7 border-t-2 border-blue-300">
+                <div className="flex justify-between items-center mb-5">
+                  <h2 className="text-xl font-bold text-blue-900">Edit Mode</h2>
                   <button
-                    onClick={() => setShowAccessModal(true)}
-                    className="flex items-center gap-2 bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 font-medium transition-colors"
+                    onClick={() => setIsEditing(false)}
+                    className="hover:bg-blue-100 p-1.5 rounded-lg transition-colors"
                   >
-                    <UserGroupIcon className="h-5 w-5" />
-                    Manage Access
+                    <XMarkIcon className="h-6 w-6 text-gray-600" />
                   </button>
-                )}
+                </div>
 
-                {canEdit && (
+                <div className="mb-5">
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    File Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="w-full border border-gray-300 px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  />
+                </div>
+
+                <div className="mb-5">
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Replace File
+                  </label>
+                  <input
+                    type="file"
+                    onChange={(e) => setNewFile(e.target.files[0])}
+                    className="w-full text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-3">
                   <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 font-medium transition-colors"
+                    onClick={handleSaveEdit}
+                    disabled={isSaving}
+                    className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-all disabled:bg-blue-400"
                   >
-                    <PencilSquareIcon className="h-5 w-5" />
-                    Edit
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </button>
-                )}
+                  <button
+                    onClick={handleDelete}
+                    className="text-red-600 px-6 py-2.5 font-medium hover:bg-red-50 rounded-lg transition-all border border-red-300"
+                  >
+                    Delete File
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            // Edit Mode (Same as previous code...)
-            <div className="bg-blue-50 -m-2 p-6 rounded-lg border border-blue-100">
-              {/* ... Your edit mode code ... */}
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-bold text-blue-800">Edit Mode</h2>
-                <button onClick={() => setIsEditing(false)}>
-                  <XMarkIcon className="h-5 w-5 text-gray-400" />
-                </button>
-              </div>
-
-              {/* ... Rename/Replace inputs ... */}
-              <div className="mb-4">
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="w-full border p-2 rounded"
-                />
-              </div>
-              <div className="mb-4">
-                <input
-                  type="file"
-                  onChange={(e) => setNewFile(e.target.files[0])}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSaveEdit}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="text-red-600 px-4 py-2"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* RENDER THE MODAL */}
       {showAccessModal && (
         <AccessModal fileId={id} onClose={() => setShowAccessModal(false)} />
       )}

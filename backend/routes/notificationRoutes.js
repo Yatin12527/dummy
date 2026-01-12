@@ -1,9 +1,10 @@
 import express from "express";
 import Notification from "../models/Notification.js";
 import validateToken from "../middlewares/authmiddleware.js";
+import { markAllAsRead } from "../controllers/notificationController.js";
 
 const router = express.Router();
-
+router.put("/mark-read-all", validateToken, markAllAsRead);
 router.get("/", validateToken, async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user.id })

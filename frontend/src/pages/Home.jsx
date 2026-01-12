@@ -35,23 +35,26 @@ const Home = () => {
       toast.error("Failed to delete file");
     }
   };
+
   const redirectLogic = () => {
     navigate("/admin");
   };
+
   console.log(user);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <nav className="bg-white shadow-sm mb-8">
+      <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-blue-600 flex items-center gap-2">
               <img
                 src="/miniDrive.svg"
                 alt="Mini Drive logo"
                 className="h-6 w-6"
               />
-              <span className="flex items-start">
+              <span className="flex text-black items-start">
                 Mini Drive
                 {user.role === "admin" && (
                   <sup className="ml-1 text-[10px] font-semibold text-blue-600 border border-blue-600 rounded-full px-1 leading-none">
@@ -61,21 +64,22 @@ const Home = () => {
               </span>
             </h1>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-6">
               <Notifications />
-              <span className="text-gray-700">Hi, {user?.name}</span>
+              <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                {user?.name}
+              </span>
               {user.role === "admin" && (
                 <button
                   onClick={redirectLogic}
-                  className="text-gray-700 cursor-pointer"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors hidden sm:block"
                 >
                   Dashboard
                 </button>
               )}
-
               <button
                 onClick={logout}
-                className="px-3 py-1 text-sm text-red-600 border border-red-600 rounded hover:bg-red-50"
+                className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
               >
                 Logout
               </button>
@@ -85,10 +89,17 @@ const Home = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FileUpload onUploadSuccess={fetchFiles} />
-        <h2 className="text-xl font-bold mb-4 text-gray-800">Your Files</h2>
-        <FileList files={files} onDelete={handleDelete} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="mb-10">
+          <FileUpload onUploadSuccess={fetchFiles} />
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+            Your Files
+          </h2>
+          <FileList files={files} onDelete={handleDelete} />
+        </div>
       </main>
     </div>
   );
