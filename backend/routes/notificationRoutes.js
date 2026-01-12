@@ -1,6 +1,6 @@
 import express from "express";
 import Notification from "../models/Notification.js";
-import validateToken from "../middlewares/authMiddleware.js";
+import validateToken from "../middlewares/authmiddleware.js";
 
 const router = express.Router();
 
