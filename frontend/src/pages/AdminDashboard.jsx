@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const [files, setFiles] = useState([]);
   const [stats, setStats] = useState({ totalFiles: 0, totalUsers: 0 });
+  const [loading, setLoading] = useState(true); // Added loading state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +28,8 @@ const AdminDashboard = () => {
       setStats(statsRes.data);
     } catch (error) {
       console.error("Error fetching admin data");
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -40,6 +43,16 @@ const AdminDashboard = () => {
       toast.error("Failed to delete");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-100">
+        <p className="text-xl font-semibold text-gray-600">
+          Loading Dashboard...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
