@@ -96,7 +96,7 @@ const Notifications = () => {
             )}
           </div>
 
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-64 overflow-y-auto overflow-x-hidden">
             {notifications.length === 0 ? (
               <p className="p-4 text-sm text-gray-500 text-center">
                 No notifications
