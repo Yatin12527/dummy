@@ -79,7 +79,7 @@ const Notifications = () => {
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden border border-gray-100 animate-fade-in-down">
+        <div className="absolute top-2 right-10 mt-2 w-80 bg-white rounded-lg shadow-xl z-[100] overflow-hidden border border-gray-100 animate-fade-in-down">
           {/* Header with Mark All Read Button */}
           <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
             <span className="font-semibold text-gray-700">Notifications</span>
