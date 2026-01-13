@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowDownTrayIcon,
   PencilSquareIcon,
-  TrashIcon,
-  ArrowPathIcon,
   XMarkIcon,
   LockClosedIcon,
   PaperAirplaneIcon,

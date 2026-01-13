@@ -43,43 +43,47 @@ const Home = () => {
   console.log(user);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"></div>
+
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200">
+      <nav className=" top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-semibold text-blue-600 flex items-center gap-2">
+            <h1 className="text-xl font-semibold flex items-center gap-2">
               <img
                 src="/miniDrive.svg"
                 alt="Mini Drive logo"
-                className="h-6 w-6"
+                className="h-7 w-7"
               />
-              <span className="flex text-black items-start">
+              <span className="flex text-gray-900 items-center gap-2">
                 Mini Drive
                 {user.role === "admin" && (
-                  <sup className="ml-1 text-[10px] font-semibold text-blue-600 border border-blue-600 rounded-full px-1 leading-none">
+                  <sup className="ml-1 text-[10px] p-1 font-semibold text-blue-600 border border-blue-600 rounded-full px-1 leading-none">
                     admin
                   </sup>
                 )}
               </span>
             </h1>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <Notifications />
-              <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                {user?.name}
-              </span>
-              {user.role === "admin" && (
-                <button
-                  onClick={redirectLogic}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors hidden sm:block"
-                >
-                  Dashboard
-                </button>
-              )}
+              <div className="hidden sm:flex items-center gap-4 border-l border-gray-200 pl-4">
+                <span className="text-sm font-medium text-gray-700">
+                  {user?.name}
+                </span>
+                {user.role === "admin" && (
+                  <button
+                    onClick={redirectLogic}
+                    className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    Dashboard
+                  </button>
+                )}
+              </div>
               <button
                 onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm"
               >
                 Logout
               </button>
