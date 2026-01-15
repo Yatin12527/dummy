@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import {
   TrashIcon,
-  UserGroupIcon, // CHANGED: Used for "Manage Access"
+  UserGroupIcon,
   EyeIcon,
   PencilSquareIcon,
   DocumentIcon,
@@ -24,7 +24,7 @@ const FileList = ({ files, onDelete, onShare }) => {
       return {
         role: "owner",
         canDelete: true,
-        canManage: true, // Renamed for clarity
+        canManage: true,
         label: null,
         badgeClass: null,
       };
@@ -41,12 +41,12 @@ const FileList = ({ files, onDelete, onShare }) => {
       return {
         role,
         canDelete: canEdit,
-        canManage: false, // Editors usually can't manage other users
+        canManage: false,
         label:
           role === "edit" ? "Editor" : role === "delete" ? "Editor" : "Viewer",
         badgeClass: canEdit
-          ? "bg-gray-900 text-white"
-          : "bg-gray-100 text-gray-600 border border-gray-200",
+          ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white",
       };
     }
 
@@ -56,7 +56,7 @@ const FileList = ({ files, onDelete, onShare }) => {
       canDelete: false,
       canManage: false,
       label: "Viewer",
-      badgeClass: "bg-gray-100 text-gray-600 border border-gray-200",
+      badgeClass: "bg-gradient-to-r from-blue-500 to-indigo-600 text-white",
     };
   };
 
@@ -77,7 +77,7 @@ const FileList = ({ files, onDelete, onShare }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       {files.map((file) => {
         const { role, canDelete, canManage, label, badgeClass } =
           getFilePermissions(file);
@@ -86,28 +86,31 @@ const FileList = ({ files, onDelete, onShare }) => {
         return (
           <div
             key={file._id}
-            className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col"
+            className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-gray-300 transition-all duration-300 overflow-hidden flex flex-col"
           >
             {/* --- PREVIEW AREA --- */}
             <div
               onClick={() => navigate(`/file/${file._id}`)}
-              className="cursor-pointer relative h-44 bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden"
+              className="cursor-pointer relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden"
             >
               {file.type.startsWith("image/") ? (
                 <img
                   src={file.url}
                   alt={file.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               ) : (
-                <FileIcon className="w-16 h-16 text-gray-300 group-hover:text-gray-400 transition-colors duration-300" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-blue-400/10 rounded-full blur-2xl"></div>
+                  <FileIcon className="relative w-20 h-20 text-gray-400 group-hover:text-blue-500 transition-all duration-300 group-hover:scale-110" />
+                </div>
               )}
 
-              {/* Role Badge (Hidden for Owner) */}
+              {/* Role Badge */}
               {label && (
                 <div className="absolute top-3 right-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold shadow-sm ${badgeClass}`}
+                    className={`px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold shadow-lg backdrop-blur-sm ${badgeClass}`}
                   >
                     {label}
                   </span>
@@ -116,10 +119,10 @@ const FileList = ({ files, onDelete, onShare }) => {
             </div>
 
             {/* --- INFO AREA --- */}
-            <div className="p-4 flex flex-col flex-grow">
-              <div className="flex-grow">
+            <div className="p-5 flex flex-col flex-grow">
+              <div className="flex-grow space-y-3">
                 <h3
-                  className="text-sm font-bold text-gray-900 truncate mb-1"
+                  className="text-sm font-bold text-gray-900 truncate"
                   title={file.name}
                 >
                   {file.name}
@@ -127,13 +130,12 @@ const FileList = ({ files, onDelete, onShare }) => {
 
                 {/* Shared By Badge */}
                 {role !== "owner" && file.owner && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-50 border border-gray-100 rounded-md mb-3">
-                    <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] font-bold">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
                       {file.owner.name?.[0]?.toUpperCase()}
                     </div>
-                    <span className="text-xs text-gray-500">
-                      Shared by{" "}
-                      <span className="font-medium text-gray-700">
+                    <span className="text-xs text-gray-600">
+                      <span className="font-medium text-gray-800">
                         {file.owner.name}
                       </span>
                     </span>
@@ -141,62 +143,65 @@ const FileList = ({ files, onDelete, onShare }) => {
                 )}
 
                 {/* Metadata */}
-                <div className="flex items-center justify-between text-xs text-gray-400 mb-4 font-medium mt-1">
-                  <span>{formatFileSize(file.size)}</span>
+                <div className="flex items-center justify-between text-xs text-gray-500 font-medium pt-2">
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                    {formatFileSize(file.size)}
+                  </span>
                   <span>
                     {new Date(file.createdAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      year: "numeric",
                     })}
                   </span>
                 </div>
               </div>
 
               {/* --- ACTION BUTTONS --- */}
-              <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                {/* 1. PRIMARY: Open (Green) or View (Black) */}
+              <div className="flex items-center gap-2 pt-4 mt-4 border-t border-gray-100">
+                {/* 1. PRIMARY: Open or View */}
                 <button
                   onClick={() => navigate(`/file/${file._id}`)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
                     role === "edit" || role === "owner"
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                      : "bg-gray-900 text-white hover:bg-black"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700"
+                      : "bg-gradient-to-r from-gray-800 to-gray-900 text-white hover:from-gray-900 hover:to-black"
                   }`}
                 >
                   {role === "edit" || role === "owner" ? (
                     <>
-                      <PencilSquareIcon className="w-3.5 h-3.5" /> Open
+                      <PencilSquareIcon className="w-4 h-4" /> Open
                     </>
                   ) : (
                     <>
-                      <EyeIcon className="w-3.5 h-3.5" /> View
+                      <EyeIcon className="w-4 h-4" /> View
                     </>
                   )}
                 </button>
 
-                {/* 2. MANAGE USERS (Blue) - Only for Owner */}
-                {/* Changed Icon to UserGroupIcon to signify "Manage Users" */}
+                {/* 2. MANAGE USERS - Only for Owner */}
                 {canManage && onShare && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onShare(file); // Opens the Share/Manage Modal
+                      onShare(file);
                     }}
-                    className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                    className="p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md border border-blue-100"
                     title="Manage Users & Access"
                   >
                     <UserGroupIcon className="w-4 h-4" />
                   </button>
                 )}
 
-                {/* 3. DELETE (Red) */}
+                {/* 3. DELETE */}
                 {canDelete && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(file._id);
                     }}
-                    className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors"
+                    className="p-2.5 bg-gradient-to-br from-rose-50 to-red-50 text-rose-600 hover:from-rose-100 hover:to-red-100 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md border border-rose-100"
                     title="Delete File"
                   >
                     <TrashIcon className="w-4 h-4" />

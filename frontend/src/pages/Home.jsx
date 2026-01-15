@@ -5,13 +5,18 @@ import FileUpload from "../components/FileUpload";
 import FileList from "../components/FileList";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
-import Notifications from "../components/Notifications";
+import Navbar from "../components/Navbar";
 import AccessModal from "../components/AccessModal";
+import {
+  FolderIcon,
+  FolderOpenIcon,
+  ShareIcon,
+} from "@heroicons/react/24/outline";
 
 const Home = () => {
-  const { user, logout } = useAuth();
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState("my");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState(null);
@@ -21,6 +26,7 @@ const Home = () => {
   }, [activeTab]);
 
   const fetchFiles = async () => {
+    setIsLoading(true);
     try {
       const endpoint =
         activeTab === "my" ? "/api/files/myfiles" : "/api/files/shared";
@@ -28,6 +34,8 @@ const Home = () => {
       setFiles(data);
     } catch (error) {
       toast.error("Could not load files");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,10 +50,9 @@ const Home = () => {
     }
   };
 
-  // 3. HANDLER FOR THE FILE LIST BUTTON
   const handleManageClick = (file) => {
     setSelectedFileId(file._id);
-    setShowAccessModal(true); // Opens the Access/Manage Modal
+    setShowAccessModal(true);
   };
 
   const redirectLogic = () => {
@@ -55,32 +62,7 @@ const Home = () => {
   return (
     <div className="min-h-screen relative">
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"></div>
-      <nav className="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-semibold flex items-center gap-2">
-              <img src="/miniDrive.svg" alt="Mini Drive" className="h-7 w-7" />
-              <span className="flex text-gray-900 items-center gap-2">
-                Mini Drive
-                {user.role === "admin" && (
-                  <sup className="ml-1 text-[10px] p-1 font-semibold text-blue-600 border border-blue-600 rounded-full px-1 leading-none">
-                    admin
-                  </sup>
-                )}
-              </span>
-            </h1>
-            <div className="flex items-center gap-4">
-              <Notifications />
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {activeTab === "my" && (
@@ -91,38 +73,80 @@ const Home = () => {
 
         <div>
           <div className="flex justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              {activeTab === "my" ? "Your Files" : "Shared with You"}
+            <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+              {activeTab === "my" ? (
+                <>
+                  <FolderIcon className="w-7 h-7" />
+                  Your Files
+                </>
+              ) : (
+                <>
+                  <ShareIcon className="w-7 h-7" />
+                  Shared with You
+                </>
+              )}
             </h2>
             <div className="bg-gray-100 p-1 rounded-lg inline-flex">
               <button
                 onClick={() => setActiveTab("my")}
-                className={`px-4 py-2 rounded-md text-sm ${
+                className={`px-4 py-2 rounded-md text-sm flex items-center gap-2 ${
                   activeTab === "my"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-500"
                 }`}
               >
+                <FolderIcon className="w-4 h-4" />
                 My Files
               </button>
               <button
                 onClick={() => setActiveTab("shared")}
-                className={`px-4 py-2 rounded-md text-sm ${
+                className={`px-4 py-2 rounded-md text-sm flex items-center gap-2 ${
                   activeTab === "shared"
                     ? "bg-white text-blue-600 shadow-sm"
                     : "text-gray-500"
                 }`}
               >
+                <ShareIcon className="w-4 h-4" />
                 Shared
               </button>
             </div>
           </div>
 
-          <FileList
-            files={files}
-            onDelete={handleDelete}
-            onShare={handleManageClick}
-          />
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="relative w-16 h-16">
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+              </div>
+              <p className="mt-4 text-sm text-gray-500 font-medium">
+                Loading files...
+              </p>
+            </div>
+          ) : files.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4">
+              <div className="bg-gray-50 rounded-full p-6 mb-4">
+                {activeTab === "my" ? (
+                  <FolderOpenIcon className="w-16 h-16 text-gray-300" />
+                ) : (
+                  <ShareIcon className="w-16 h-16 text-gray-300" />
+                )}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {activeTab === "my" ? "No files yet" : "No shared files"}
+              </h3>
+              <p className="text-sm text-gray-500 text-center max-w-sm">
+                {activeTab === "my"
+                  ? "Upload your first file to get started with Mini Drive"
+                  : "Files shared with you by others will appear here"}
+              </p>
+            </div>
+          ) : (
+            <FileList
+              files={files}
+              onDelete={handleDelete}
+              onShare={handleManageClick}
+            />
+          )}
         </div>
       </main>
 
