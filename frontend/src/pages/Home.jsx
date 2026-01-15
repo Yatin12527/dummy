@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import FileUpload from "../components/FileUpload";
@@ -20,35 +20,20 @@ const Home = () => {
   const navigate = useNavigate();
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState(null);
-  const pollingIntervalRef = useRef(null);
 
   useEffect(() => {
     fetchFiles();
-
-    // Start polling for updates every 5 seconds
-    pollingIntervalRef.current = setInterval(() => {
-      fetchFiles();
-    }, 5000);
-
-    // Cleanup on unmount
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
   }, [activeTab]);
 
   const fetchFiles = async () => {
+    setIsLoading(true);
     try {
       const endpoint =
         activeTab === "my" ? "/api/files/myfiles" : "/api/files/shared";
       const { data } = await api.get(endpoint);
       setFiles(data);
     } catch (error) {
-      // Only show error on initial load, not during polling
-      if (files.length === 0) {
-        toast.error("Could not load files");
-      }
+      toast.error("Could not load files");
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +53,10 @@ const Home = () => {
   const handleManageClick = (file) => {
     setSelectedFileId(file._id);
     setShowAccessModal(true);
+  };
+
+  const redirectLogic = () => {
+    navigate("/admin");
   };
 
   return (
