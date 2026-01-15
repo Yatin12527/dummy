@@ -339,18 +339,45 @@ export const manageUserAccess = async (req, res) => {
         (share) => share.user.toString() !== userId
       );
       await file.save();
+
+      // NEW: Notify the user they were removed
+      await Notification.create({
+        recipient: userId,
+        sender: req.user.id,
+        file: file._id,
+        type: "revoked", // Make sure this is in your Notification Enum
+        message: `${req.user.name} removed your access to "${file.name}"`,
+      });
+
       return res.json({ message: "Access removed successfully" });
     }
 
-    // Otherwise, find user and update role
+    // --- CASE 2: UPDATE ROLE ---
     const shareIndex = file.sharedWith.findIndex(
       (share) => share.user.toString() === userId
     );
 
     if (shareIndex !== -1) {
-      file.sharedWith[shareIndex].role = role;
-      await file.save();
-      res.json({ message: `Permission updated to ${role}` });
+      const oldRole = file.sharedWith[shareIndex].role;
+
+      // Only update and notify if the role is actually different
+      if (oldRole !== role) {
+        file.sharedWith[shareIndex].role = role;
+        await file.save();
+
+        // NEW: Notify the user of the update
+        await Notification.create({
+          recipient: userId,
+          sender: req.user.id,
+          file: file._id,
+          type: "update", // Make sure this is in your Notification Enum
+          message: `${req.user.name} changed your access to "${role}" for "${file.name}"`,
+        });
+
+        res.json({ message: `Permission updated to ${role}` });
+      } else {
+        res.json({ message: "Role unchanged" });
+      }
     } else {
       res.status(404).json({ message: "User not found in shared list" });
     }

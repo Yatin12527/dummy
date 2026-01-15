@@ -13,9 +13,13 @@ const notificationSchema = new mongoose.Schema(
       required: true,
     },
     file: { type: mongoose.Schema.Types.ObjectId, ref: "File" },
-    type: { type: String, enum: ["request", "granted"], required: true },
+    type: {
+      type: String,
+      enum: ["request", "granted", "denied", "revoked", "update"],
+      required: true,
+    },
     message: { type: String },
-    read: { type: Boolean, default: false }, 
+    read: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
