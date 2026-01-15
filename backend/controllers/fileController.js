@@ -85,26 +85,21 @@ export const requestAccess = async (req, res) => {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ message: "File not found" });
 
-    // 1. FETCH THE USER TO GET THE NAME
-    // We use the ID from the token to find the full user profile
-    const requestor = await User.findById(req.user.id);
-
-    // Fallback to "Someone" if user isn't found (safety check)
-    const requestorName = requestor ? requestor.name : "Someone";
-
     if (!file.accessRequests.includes(req.user.id)) {
       file.accessRequests.push(req.user.id);
       await file.save();
     }
 
-    // 2. USE THE FETCHED NAME IN THE MESSAGE
+    // FIXED: Fetch the complete user object to get the name
+    const requester = await User.findById(req.user.id).select("name email");
+
+    // Create Notification for Owner with actual user name
     await Notification.create({
       recipient: file.owner,
       sender: req.user.id,
       file: file._id,
       type: "request",
-      // Now it will say "Yatinder requested..." instead of "undefined requested..."
-      message: `${requestorName} requested access to ${file.name}`,
+      message: `${requester.name} requested access to ${file.name}`,
     });
 
     res.json({ message: "Access requested" });
@@ -328,6 +323,7 @@ export const updateGeneralAccess = async (req, res) => {
   }
 };
 
+// NEW: Manage User Access (Update Role or Remove User)
 export const manageUserAccess = async (req, res) => {
   try {
     const { userId, role } = req.body; // role can be "view", "edit", or "remove"
@@ -340,9 +336,6 @@ export const manageUserAccess = async (req, res) => {
       return res.status(403).json({ message: "Only owner can manage access" });
     }
 
-    const owner = await User.findById(req.user.id);
-    const ownerName = owner ? owner.name : "Owner";
-
     if (role === "remove") {
       // Filter out the user to remove them
       file.sharedWith = file.sharedWith.filter(
@@ -350,14 +343,13 @@ export const manageUserAccess = async (req, res) => {
       );
       await file.save();
 
-      // NOTIFY: User removed
+      // NEW: Notify the user they were removed
       await Notification.create({
         recipient: userId,
         sender: req.user.id,
         file: file._id,
-        type: "revoked",
-        // Use ownerName variable here
-        message: `${ownerName} removed your access to "${file.name}"`,
+        type: "revoked", // Make sure this is in your Notification Enum
+        message: `${req.user.name} removed your access to "${file.name}"`,
       });
 
       return res.json({ message: "Access removed successfully" });
@@ -371,19 +363,18 @@ export const manageUserAccess = async (req, res) => {
     if (shareIndex !== -1) {
       const oldRole = file.sharedWith[shareIndex].role;
 
-      // Only notify if the role is actually different
+      // Only update and notify if the role is actually different
       if (oldRole !== role) {
         file.sharedWith[shareIndex].role = role;
         await file.save();
 
-        // NOTIFY: Role updated
+        // NEW: Notify the user of the update
         await Notification.create({
           recipient: userId,
           sender: req.user.id,
           file: file._id,
-          type: "update",
-          // Use ownerName variable here
-          message: `${ownerName} changed your access to "${role}" for "${file.name}"`,
+          type: "update", // Make sure this is in your Notification Enum
+          message: `${req.user.name} changed your access to "${role}" for "${file.name}"`,
         });
 
         res.json({ message: `Permission updated to ${role}` });
