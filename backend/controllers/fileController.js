@@ -381,3 +381,17 @@ export const manageUserAccess = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getSharedFiles = async (req, res) => {
+  try {
+    const files = await File.find({
+      "sharedWith.user": req.user.id
+    })
+    .populate("owner", "name email")
+    .sort({ createdAt: -1 });
+    
+    res.json(files);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -1,178 +1,209 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TrashIcon,
+  ShareIcon,
   EyeIcon,
-  UserGroupIcon,
+  PencilSquareIcon,
   DocumentIcon,
+  PhotoIcon,
+  FilmIcon,
   MusicalNoteIcon,
-  VideoCameraIcon,
-  QuestionMarkCircleIcon,
-  ArrowDownTrayIcon,
-} from "@heroicons/react/24/solid";
-import AccessModal from "./AccessModal";
-import ShareModal from "./ShareModal";
+  DocumentTextIcon,
+  ArchiveBoxIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../context/AuthContext";
 
-const FileList = ({ files, onDelete }) => {
-  const [accessModalFileId, setAccessModalFileId] = useState(null);
-  const [shareModalFile, setShareModalFile] = useState(null);
+const FileList = ({ files, onDelete, onShare }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const getFileFormat = (filename) => {
-    if (!filename) return "FILE";
-    return filename.split(".").pop().toUpperCase();
-  };
+  const getFilePermissions = (file) => {
+    // 1. OWNER (No Badge, Full Permissions)
+    if (file.owner?._id === user.id || file.owner === user.id) {
+      return {
+        role: "owner",
+        canDelete: true,
+        canShare: true,
+        label: null, // Removed Badge
+        badgeClass: null,
+      };
+    }
 
-  const getFileSize = (size) => {
-    if (!size) return "";
-    if (size < 1024) return size + " B";
-    if (size < 1024 * 1024) return (size / 1024).toFixed(1) + " KB";
-    return (size / (1024 * 1024)).toFixed(1) + " MB";
-  };
-
-  const renderPreview = (file) => {
-    if (file.type.startsWith("image/") && !file.type.includes("svg")) {
-      return (
-        <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100">
-          <img
-            src={file.url}
-            alt={file.name}
-            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-          />
-        </div>
-      );
-    }
-    if (file.type.startsWith("video/")) {
-      return (
-        <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500">
-          <div className="absolute inset-0 bg-black/20" />
-          <VideoCameraIcon className="relative h-16 w-16 text-white drop-shadow-lg" />
-        </div>
-      );
-    }
-    if (file.type.startsWith("audio/")) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-violet-400 to-purple-600">
-          <MusicalNoteIcon className="h-16 w-16 text-white drop-shadow-lg" />
-        </div>
-      );
-    }
-    if (file.type.includes("pdf")) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-red-400 to-rose-600">
-          <DocumentIcon className="h-16 w-16 text-white drop-shadow-lg" />
-        </div>
-      );
-    }
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-slate-400 to-gray-600">
-        <QuestionMarkCircleIcon className="h-16 w-16 text-white drop-shadow-lg" />
-        <span className="text-xs font-bold text-white mt-2">
-          {getFileFormat(file.name)}
-        </span>
-      </div>
+    // 2. SHARED USER
+    const sharedInfo = file.sharedWith?.find(
+      (s) => s.user === user.id || s.user?._id === user.id
     );
+
+    if (sharedInfo) {
+      const role = sharedInfo.role;
+      const canEdit = role === "edit" || role === "delete";
+      return {
+        role,
+        canDelete: canEdit,
+        canShare: false,
+        label:
+          role === "edit" ? "Editor" : role === "delete" ? "Editor" : "Viewer",
+        // Editor Badge: Black BG + White Text
+        // Viewer Badge: Gray Default
+        badgeClass: canEdit
+          ? "bg-gray-900 text-white border border-gray-900 shadow-md"
+          : "bg-gray-100 text-gray-600 border border-gray-200",
+      };
+    }
+
+    // 3. FALLBACK / VIEWER
+    return {
+      role: "viewer",
+      canDelete: false,
+      canShare: false,
+      label: "Viewer",
+      badgeClass: "bg-gray-100 text-gray-600 border border-gray-200",
+    };
   };
 
-  if (files.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-4">
-          <DocumentIcon className="h-12 w-12 text-indigo-500" />
-        </div>
-        <p className="text-lg font-medium text-gray-700">
-          No files uploaded yet
-        </p>
-        <p className="text-sm text-gray-500 mt-1">
-          Upload your first file to get started
-        </p>
-      </div>
-    );
-  }
+  const getFileIcon = (type) => {
+    if (type.startsWith("image/")) return PhotoIcon;
+    if (type.startsWith("video/")) return FilmIcon;
+    if (type.startsWith("audio/")) return MusicalNoteIcon;
+    if (type.includes("pdf")) return DocumentTextIcon;
+    if (type.includes("zip") || type.includes("rar")) return ArchiveBoxIcon;
+    return DocumentIcon;
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
 
   return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 p-4 sm:p-0">
-        {files.map((file) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {files.map((file) => {
+        const { role, canDelete, canShare, label, badgeClass } =
+          getFilePermissions(file);
+        const FileIcon = getFileIcon(file.type);
+
+        return (
           <div
             key={file._id}
-            className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-indigo-200 hover:-translate-y-1"
+            className="group bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
           >
-            {/* Preview Section */}
-            <div className="h-64 relative overflow-hidden">
-              {renderPreview(file)}
+            {/* File Preview */}
+            <div
+              onClick={() => navigate(`/file/${file._id}`)}
+              className="cursor-pointer relative h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100"
+            >
+              {file.type.startsWith("image/") ? (
+                <img
+                  src={file.url}
+                  alt={file.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <FileIcon className="w-12 h-12 text-gray-300 group-hover:text-gray-400 transition-colors" />
+              )}
 
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 bg-white/90 hover:bg-white backdrop-blur-sm text-gray-900 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
+              {/* Role Badge (Only show if label exists, i.e., NOT owner) */}
+              {label && (
+                <div className="absolute top-3 right-3">
+                  <span
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold shadow-sm ${badgeClass}`}
                   >
-                    <EyeIcon className="h-3.5 w-3.5" /> View
-                  </a>
-                  <a
-                    href={file.url}
-                    download
-                    className="bg-white/90 hover:bg-white backdrop-blur-sm text-gray-900 p-2 rounded-lg flex items-center justify-center transition-all"
-                  >
-                    <ArrowDownTrayIcon className="h-3.5 w-3.5" />
-                  </a>
+                    {label}
+                  </span>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Info Section */}
-            <div className="p-4">
-              <h3
-                className="text-sm font-semibold text-gray-900 truncate mb-1"
-                title={file.name}
-              >
-                {file.name}
-              </h3>
-              <p className="text-xs text-gray-500 mb-3">
-                {getFileFormat(file.name)}{" "}
-                {file.size && `• ${getFileSize(file.size)}`}
-              </p>
+            {/* File Info */}
+            <div className="p-4 flex flex-col flex-grow">
+              <div className="flex-grow">
+                <h3
+                  className="text-sm font-semibold text-gray-900 truncate mb-1"
+                  title={file.name}
+                >
+                  {file.name}
+                </h3>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2">
+                {/* Shared By */}
+                {role !== "owner" && file.owner && (
+                  <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                    Shared by{" "}
+                    <span className="font-medium text-gray-700">
+                      {file.owner.name}
+                    </span>
+                  </p>
+                )}
+
+                {/* Metadata */}
+                <div className="flex items-center gap-2 text-xs text-gray-400 mb-4 font-medium">
+                  <span>{formatFileSize(file.size)}</span>
+                  <span>•</span>
+                  <span>
+                    {new Date(file.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                {/* PRIMARY ACTION BUTTON */}
                 <button
-                  onClick={() => setAccessModalFileId(file._id)}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all shadow-sm hover:shadow"
+                  onClick={() => navigate(`/file/${file._id}`)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md shadow-sm transition-all ${
+                    role === "edit" || role === "owner"
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-md" // Open (Green)
+                      : "bg-gray-900 text-white hover:bg-black hover:shadow-md" // View (Black)
+                  }`}
                 >
-                  <UserGroupIcon className="h-3.5 w-3.5" /> Share
+                  {role === "edit" || role === "owner" ? (
+                    <>
+                      <PencilSquareIcon className="w-4 h-4" /> Open
+                    </>
+                  ) : (
+                    <>
+                      <EyeIcon className="w-4 h-4" /> View
+                    </>
+                  )}
                 </button>
-                <button
-                  onClick={() => onDelete(file._id)}
-                  className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 p-2 rounded-lg flex items-center justify-center transition-all"
-                  title="Delete file"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
+
+                {/* SHARE BUTTON (Blue Outline) */}
+                {canShare && onShare && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShare(file);
+                    }}
+                    className="p-2 bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 rounded-md transition-all shadow-sm"
+                    title="Share"
+                  >
+                    <ShareIcon className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* DELETE BUTTON (Solid Red) */}
+                {canDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(file._id);
+                    }}
+                    className="p-2 bg-rose-600 text-white hover:bg-rose-700 hover:shadow-md rounded-md transition-all shadow-sm"
+                    title="Delete"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Access Modal */}
-      {accessModalFileId && (
-        <AccessModal
-          fileId={accessModalFileId}
-          onClose={() => setAccessModalFileId(null)}
-        />
-      )}
-
-      {/* Share Modal */}
-      {shareModalFile && (
-        <ShareModal
-          fileId={shareModalFile._id}
-          fileName={shareModalFile.name}
-          onClose={() => setShareModalFile(null)}
-        />
-      )}
-    </>
+        );
+      })}
+    </div>
   );
 };
 
