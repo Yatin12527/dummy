@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import {
   TrashIcon,
-  ShareIcon,
+  UserGroupIcon, // CHANGED: Used for "Manage Access"
   EyeIcon,
   PencilSquareIcon,
   DocumentIcon,
@@ -10,7 +10,6 @@ import {
   MusicalNoteIcon,
   DocumentTextIcon,
   ArchiveBoxIcon,
-  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
 
@@ -18,14 +17,15 @@ const FileList = ({ files, onDelete, onShare }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // --- PERMISSION LOGIC ---
   const getFilePermissions = (file) => {
-    // 1. OWNER (No Badge, Full Permissions)
+    // 1. OWNER (Full Access)
     if (file.owner?._id === user.id || file.owner === user.id) {
       return {
         role: "owner",
         canDelete: true,
-        canShare: true,
-        label: null, // Removed Badge
+        canManage: true, // Renamed for clarity
+        label: null,
         badgeClass: null,
       };
     }
@@ -41,27 +41,26 @@ const FileList = ({ files, onDelete, onShare }) => {
       return {
         role,
         canDelete: canEdit,
-        canShare: false,
+        canManage: false, // Editors usually can't manage other users
         label:
           role === "edit" ? "Editor" : role === "delete" ? "Editor" : "Viewer",
-        // Editor Badge: Black BG + White Text
-        // Viewer Badge: Gray Default
         badgeClass: canEdit
-          ? "bg-gray-900 text-white border border-gray-900 shadow-md"
+          ? "bg-gray-900 text-white"
           : "bg-gray-100 text-gray-600 border border-gray-200",
       };
     }
 
-    // 3. FALLBACK / VIEWER
+    // 3. FALLBACK
     return {
       role: "viewer",
       canDelete: false,
-      canShare: false,
+      canManage: false,
       label: "Viewer",
       badgeClass: "bg-gray-100 text-gray-600 border border-gray-200",
     };
   };
 
+  // --- ICON HELPER ---
   const getFileIcon = (type) => {
     if (type.startsWith("image/")) return PhotoIcon;
     if (type.startsWith("video/")) return FilmIcon;
@@ -80,19 +79,19 @@ const FileList = ({ files, onDelete, onShare }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {files.map((file) => {
-        const { role, canDelete, canShare, label, badgeClass } =
+        const { role, canDelete, canManage, label, badgeClass } =
           getFilePermissions(file);
         const FileIcon = getFileIcon(file.type);
 
         return (
           <div
             key={file._id}
-            className="group bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+            className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col"
           >
-            {/* File Preview */}
+            {/* --- PREVIEW AREA --- */}
             <div
               onClick={() => navigate(`/file/${file._id}`)}
-              className="cursor-pointer relative h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100"
+              className="cursor-pointer relative h-44 bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden"
             >
               {file.type.startsWith("image/") ? (
                 <img
@@ -101,14 +100,14 @@ const FileList = ({ files, onDelete, onShare }) => {
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
-                <FileIcon className="w-12 h-12 text-gray-300 group-hover:text-gray-400 transition-colors" />
+                <FileIcon className="w-16 h-16 text-gray-300 group-hover:text-gray-400 transition-colors duration-300" />
               )}
 
-              {/* Role Badge (Only show if label exists, i.e., NOT owner) */}
+              {/* Role Badge (Hidden for Owner) */}
               {label && (
                 <div className="absolute top-3 right-3">
                   <span
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold shadow-sm ${badgeClass}`}
+                    className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold shadow-sm ${badgeClass}`}
                   >
                     {label}
                   </span>
@@ -116,30 +115,34 @@ const FileList = ({ files, onDelete, onShare }) => {
               )}
             </div>
 
-            {/* File Info */}
+            {/* --- INFO AREA --- */}
             <div className="p-4 flex flex-col flex-grow">
               <div className="flex-grow">
                 <h3
-                  className="text-sm font-semibold text-gray-900 truncate mb-1"
+                  className="text-sm font-bold text-gray-900 truncate mb-1"
                   title={file.name}
                 >
                   {file.name}
                 </h3>
 
-                {/* Shared By */}
+                {/* Shared By Badge */}
                 {role !== "owner" && file.owner && (
-                  <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                    Shared by{" "}
-                    <span className="font-medium text-gray-700">
-                      {file.owner.name}
+                  <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-50 border border-gray-100 rounded-md mb-3">
+                    <div className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] font-bold">
+                      {file.owner.name?.[0]?.toUpperCase()}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      Shared by{" "}
+                      <span className="font-medium text-gray-700">
+                        {file.owner.name}
+                      </span>
                     </span>
-                  </p>
+                  </div>
                 )}
 
                 {/* Metadata */}
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-4 font-medium">
+                <div className="flex items-center justify-between text-xs text-gray-400 mb-4 font-medium mt-1">
                   <span>{formatFileSize(file.size)}</span>
-                  <span>•</span>
                   <span>
                     {new Date(file.createdAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -149,51 +152,52 @@ const FileList = ({ files, onDelete, onShare }) => {
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* --- ACTION BUTTONS --- */}
               <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                {/* PRIMARY ACTION BUTTON */}
+                {/* 1. PRIMARY: Open (Green) or View (Black) */}
                 <button
                   onClick={() => navigate(`/file/${file._id}`)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md shadow-sm transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-colors ${
                     role === "edit" || role === "owner"
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-md" // Open (Green)
-                      : "bg-gray-900 text-white hover:bg-black hover:shadow-md" // View (Black)
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                      : "bg-gray-900 text-white hover:bg-black"
                   }`}
                 >
                   {role === "edit" || role === "owner" ? (
                     <>
-                      <PencilSquareIcon className="w-4 h-4" /> Open
+                      <PencilSquareIcon className="w-3.5 h-3.5" /> Open
                     </>
                   ) : (
                     <>
-                      <EyeIcon className="w-4 h-4" /> View
+                      <EyeIcon className="w-3.5 h-3.5" /> View
                     </>
                   )}
                 </button>
 
-                {/* SHARE BUTTON (Blue Outline) */}
-                {canShare && onShare && (
+                {/* 2. MANAGE USERS (Blue) - Only for Owner */}
+                {/* Changed Icon to UserGroupIcon to signify "Manage Users" */}
+                {canManage && onShare && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onShare(file);
+                      onShare(file); // Opens the Share/Manage Modal
                     }}
-                    className="p-2 bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 rounded-md transition-all shadow-sm"
-                    title="Share"
+                    className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                    title="Manage Users & Access"
                   >
-                    <ShareIcon className="w-4 h-4" />
+                    <UserGroupIcon className="w-4 h-4" />
                   </button>
                 )}
 
-                {/* DELETE BUTTON (Solid Red) */}
+                {/* 3. DELETE (Red) */}
                 {canDelete && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(file._id);
                     }}
-                    className="p-2 bg-rose-600 text-white hover:bg-rose-700 hover:shadow-md rounded-md transition-all shadow-sm"
-                    title="Delete"
+                    className="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-colors"
+                    title="Delete File"
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>

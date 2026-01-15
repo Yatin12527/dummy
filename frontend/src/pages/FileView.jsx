@@ -6,12 +6,12 @@ import {
   XMarkIcon,
   LockClosedIcon,
   PaperAirplaneIcon,
-  UserGroupIcon,
+  ShareIcon
 } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
-import AccessModal from "../components/AccessModal";
+import ShareModal from "../components/ShareModal";
 
 const FileView = () => {
   const { id } = useParams();
@@ -25,7 +25,9 @@ const FileView = () => {
   const [accessDenied, setAccessDenied] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showAccessModal, setShowAccessModal] = useState(false);
+
+  // State for the Share Modal
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const [newName, setNewName] = useState("");
   const [newFile, setNewFile] = useState(null);
@@ -213,18 +215,18 @@ const FileView = () => {
                 <div className="flex flex-wrap gap-3">
                   {role === "owner" && (
                     <button
-                      onClick={() => setShowAccessModal(true)}
-                      className="flex items-center gap-2 bg-green-50 text-green-700 px-5 py-2.5 rounded-lg hover:bg-green-100 font-medium transition-all border border-green-200"
+                      onClick={() => setShowShareModal(true)}
+                      className="flex items-center gap-2 bg-blue-50 text-blue-700 px-5 py-2.5 rounded-lg hover:bg-blue-100 font-medium transition-all border border-blue-200"
                     >
-                      <UserGroupIcon className="h-5 w-5" />
-                      Manage Access
+                      <ShareIcon className="h-5 w-5"/>
+                       Share
                     </button>
                   )}
 
                   {canEdit && (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 bg-blue-50 text-blue-700 px-5 py-2.5 rounded-lg hover:bg-blue-100 font-medium transition-all border border-blue-200"
+                      className="flex items-center gap-2 bg-gray-100 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-200 font-medium transition-all border border-gray-200"
                     >
                       <PencilSquareIcon className="h-5 w-5" />
                       Edit
@@ -288,8 +290,14 @@ const FileView = () => {
         </div>
       </div>
 
-      {showAccessModal && (
-        <AccessModal fileId={id} onClose={() => setShowAccessModal(false)} />
+      {/* RENDER THE SHARE MODAL */}
+      {showShareModal && (
+        <ShareModal
+          fileId={id}
+          fileName={file.name}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
       )}
     </div>
   );
