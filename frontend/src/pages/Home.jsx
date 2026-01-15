@@ -40,7 +40,6 @@ const Home = () => {
     navigate("/admin");
   };
 
-  console.log(user);
 
   return (
     <div className="min-h-screen relative">

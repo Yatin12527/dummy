@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import User from "../models/users.js";
 
-const validateToken = (req, res, next) => {
+const validateToken = async (req, res, next) => {
   try {
     const token = req.cookies.token;
 
@@ -9,7 +10,21 @@ const validateToken = (req, res, next) => {
     }
 
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
+
+    // Fetch user details from database
+    const user = await User.findById(verified.id).select("name email role");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
     next();
   } catch (err) {
     res.status(401).json({ message: "Invalid Token" });

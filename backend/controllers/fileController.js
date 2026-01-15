@@ -90,16 +90,13 @@ export const requestAccess = async (req, res) => {
       await file.save();
     }
 
-    // FIXED: Fetch the complete user object to get the name
-    const requester = await User.findById(req.user.id).select("name email");
-
-    // Create Notification for Owner with actual user name
+    // Create Notification for Owner with user name from req.user
     await Notification.create({
       recipient: file.owner,
       sender: req.user.id,
       file: file._id,
       type: "request",
-      message: `${requester.name} requested access to ${file.name}`,
+      message: `${req.user.name} requested access to ${file.name}`,
     });
 
     res.json({ message: "Access requested" });
@@ -131,7 +128,7 @@ export const getFileRequests = async (req, res) => {
 
 export const grantAccess = async (req, res) => {
   try {
-    const { userId, role } = req.body; // Now accepting Role
+    const { userId, role } = req.body;
     const file = await File.findById(req.params.id);
 
     if (file.owner.toString() !== req.user.id) {
@@ -152,13 +149,13 @@ export const grantAccess = async (req, res) => {
     );
     await file.save();
 
-    // Notify the Requester
+    // Notify the Requester using req.user.name
     await Notification.create({
       recipient: userId,
       sender: req.user.id,
       file: file._id,
       type: "granted",
-      message: `Access granted (${role}) for ${file.name}`,
+      message: `${req.user.name} granted you ${role} access to ${file.name}`,
     });
 
     res.json({ message: "Access granted!" });
@@ -178,7 +175,6 @@ export const deleteFile = async (req, res) => {
       (s) => s.user.toString() === req.user.id
     );
 
-    // CHANGED: Allow if role is 'delete' OR 'edit'
     const canDelete =
       isOwner ||
       isAdmin ||
@@ -200,24 +196,22 @@ export const deleteFile = async (req, res) => {
   }
 };
 
-// NEW: Share File directly via Email (Improved Search)
 export const shareFile = async (req, res) => {
   try {
     const { email, role } = req.body;
     const file = await File.findById(req.params.id);
 
-    if (!file) return res.status(404).json({ message: "File not found" });
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
 
-    // Only Owner (or Admin) can share
+    // Only owner (or admin) can share
     if (file.owner.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "Only owner can share files" });
     }
 
-    // 1. TRIM SPACES (Fixes copy-paste errors)
+    // Trim spaces and search case-insensitively
     const cleanEmail = email.trim();
-
-    // 2. CASE INSENSITIVE SEARCH (Fixes Capital Letter issues)
-    // This finds "bob@gmail.com" even if you type "Bob@Gmail.COM"
     const userToShare = await User.findOne({
       email: { $regex: new RegExp(`^${cleanEmail}$`, "i") },
     });
@@ -230,7 +224,7 @@ export const shareFile = async (req, res) => {
       return res.status(400).json({ message: "You already own this file" });
     }
 
-    // Add or Update permission in sharedWith array
+    // Add or update permission
     const existingShare = file.sharedWith.find(
       (s) => s.user.toString() === userToShare._id.toString()
     );
@@ -243,13 +237,13 @@ export const shareFile = async (req, res) => {
 
     await file.save();
 
-    // Notify the Recipient
+    // Notify recipient using req.user.name
     await Notification.create({
       recipient: userToShare._id,
       sender: req.user.id,
       file: file._id,
       type: "granted",
-      message: `${req.user.name} shared a file with you: ${file.name} (${role})`,
+      message: `${req.user.name} shared "${file.name}" with you (${role})`,
     });
 
     res.json({ message: `Shared with ${userToShare.email} successfully!` });
@@ -276,12 +270,12 @@ export const updateFile = async (req, res) => {
       return res.status(403).json({ message: "Permission denied" });
     }
 
-    // 1. Handle Rename
+    // Handle Rename
     if (name) file.name = name;
 
-    // 2. Handle File Replacement (If a new file was uploaded)
+    // Handle File Replacement (If a new file was uploaded)
     if (req.file) {
-      // Optional: Delete old file from Cloudinary to save space
+      // Delete old file from Cloudinary
       if (file.publicId) {
         await cloudinary.uploader.destroy(file.publicId);
       }
@@ -298,7 +292,7 @@ export const updateFile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// NEW: Update General Access (Restricted vs Public)
+
 export const updateGeneralAccess = async (req, res) => {
   try {
     const { accessType, publicPermission } = req.body;
@@ -323,10 +317,9 @@ export const updateGeneralAccess = async (req, res) => {
   }
 };
 
-// NEW: Manage User Access (Update Role or Remove User)
 export const manageUserAccess = async (req, res) => {
   try {
-    const { userId, role } = req.body; // role can be "view", "edit", or "remove"
+    const { userId, role } = req.body;
     const file = await File.findById(req.params.id);
 
     if (!file) return res.status(404).json({ message: "File not found" });
@@ -343,19 +336,19 @@ export const manageUserAccess = async (req, res) => {
       );
       await file.save();
 
-      // NEW: Notify the user they were removed
+      // Notify the user they were removed using req.user.name
       await Notification.create({
         recipient: userId,
         sender: req.user.id,
         file: file._id,
-        type: "revoked", // Make sure this is in your Notification Enum
+        type: "revoked",
         message: `${req.user.name} removed your access to "${file.name}"`,
       });
 
       return res.json({ message: "Access removed successfully" });
     }
 
-    // --- CASE 2: UPDATE ROLE ---
+    // Update Role
     const shareIndex = file.sharedWith.findIndex(
       (share) => share.user.toString() === userId
     );
@@ -368,12 +361,12 @@ export const manageUserAccess = async (req, res) => {
         file.sharedWith[shareIndex].role = role;
         await file.save();
 
-        // NEW: Notify the user of the update
+        // Notify the user of the update using req.user.name
         await Notification.create({
           recipient: userId,
           sender: req.user.id,
           file: file._id,
-          type: "update", // Make sure this is in your Notification Enum
+          type: "update",
           message: `${req.user.name} changed your access to "${role}" for "${file.name}"`,
         });
 
